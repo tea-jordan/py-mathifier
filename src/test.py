@@ -1,8 +1,10 @@
 
 import tokenize
+import keyword
 from resources.token_types import TOKEN_TYPES
+from resources.python_functions import PYTHON_FUNCTIONS
+from resources.valid_var_names import VALID_VAR_NAMES
 from enum import Enum
-
 
 
 class Modification(Enum):
@@ -10,6 +12,9 @@ class Modification(Enum):
     DELETE = 2
   
 FILE_NAME = 'src/example_file.py'
+PYTHON_KEYWORDS = keyword.kwlist + keyword.softkwlist + ['__name__']
+
+
 
 
 def get_token_list(file):
@@ -145,36 +150,81 @@ def replace_line(tokens_list, token_indexes, type_condition, text_condition, rep
     return tokens_list
 
 
+
+def find_names(tokens_list):
+
+    names = {}
+
+    for token in tokens_list:
+        if token.string in names.keys():
+            continue 
+        elif token.exact_type == TOKEN_TYPES['NAME']:
+            names[token.string] = 1
+
+    return list(names.keys())
+
+
+
+def find_first_key_by_value(dictionary, target_value):
+    for key, value in dictionary.items():
+        if value == target_value:
+            return key
+    return None
+
+
+def change_names(names_to_change):
+    names_counter = {}
+
+    for var in VALID_VAR_NAMES:
+        names_counter[var] = 0
+
+    for name in names_to_change:
+        if name in VALID_VAR_NAMES and names_counter[name] == 0:
+            names_counter[name] == 1
+        elif name not in VALID_VAR_NAMES:
+            next_var = find_first_key_by_value(names_counter, 0)
+
+            if next_var == None:
+                # we need to create a new var
+                # concat first var of 1 into 2, e.g., ii
+
+                #call replacement code
+                
+                # update dict
+            else:
+                # here we found a valid next var, so we can assign that var
+
+                # CALL REPLACEMENT CODE HERE
+
+                # THEN WILL NEED TO UPDATE COUNT AND DICT
+
+
+
 def main():
     
     
     tl = get_token_list(FILE_NAME)
     
-    for i in tl:
-        print(i)
-    
-
     ld = create_line_dict(tl)
 
-    print(ld)
 
+
+    var_names = [name for name in find_names(tl) if name not in PYTHON_KEYWORDS and name not in PYTHON_FUNCTIONS]
+    print(var_names)
+
+    print(PYTHON_KEYWORDS)
+
+    """
     ml = find_lines_to_change(tl, TOKEN_TYPES['NAME'], "my_var") #, Modification.RENAME
-    
-    #for mod in ml:
-    #   print(mod)
-
     tl = replace_tokens(ml, tl, ld, TOKEN_TYPES['NAME'], "my_var", "i")
 
-    for t in tl:
-        print(t)
-    
     # Untokenize the tokens back to code
     reconstructed_code = tokenize.untokenize(tl)
 
     # Print the reconstructed code
     print("\nReconstructed Code:")
     print(reconstructed_code)
-
+    """
     
     
 if __name__ == "__main__":
