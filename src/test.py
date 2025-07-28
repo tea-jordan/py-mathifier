@@ -112,25 +112,35 @@ def replace_tokens(lines_to_change, tokens_list, line_dict, type_condition, text
 
 def replace_line(tokens_list, token_indexes, type_condition, text_condition, replacement_text):
 
-    replacement_made = False
+    num_replacements = 0
+    length_diff = len(text_condition) - len(replacement_text) 
 
     for index in token_indexes:
 
         token = tokens_list[index]
 
         if token.exact_type == type_condition and token.string == text_condition:
-            replacement_made = True
-            start_pos = token.start[1]
-            end_pos = token.end[10]
-            
+ 
+            num_replacements += 1
+                
+            new_token = tokenize.TokenInfo(
+                type=token.type,
+                string=replacement_text,
+                start= (token.start[0], token.start[1] - (length_diff * (num_replacements - 1))),
+                end= (token.end[0], token.end[1] - (length_diff * num_replacements)),
+                line=token.line
+            )
+            tokens_list[index] = new_token
 
-        else:
-            if replacement_made:
-                print()
-
-
-        print(index)
-
+        elif num_replacements > 0:
+            new_token = tokenize.TokenInfo(
+                type=token.type,
+                string=token.string,
+                start= (token.start[0], token.start[1] - (length_diff * num_replacements)),
+                end= (token.end[0], token.end[1] - (length_diff * num_replacements)),
+                line=token.line
+            )
+            tokens_list[index] = new_token
 
     return tokens_list
 
@@ -148,14 +158,22 @@ def main():
 
     print(ld)
 
-    #ml = find_lines_to_change(tl, TOKEN_TYPES['NAME'], "my_var") #, Modification.RENAME
+    ml = find_lines_to_change(tl, TOKEN_TYPES['NAME'], "my_var") #, Modification.RENAME
     
     #for mod in ml:
     #   print(mod)
 
+    tl = replace_tokens(ml, tl, ld, TOKEN_TYPES['NAME'], "my_var", "i")
 
+    for t in tl:
+        print(t)
     
-    
+    # Untokenize the tokens back to code
+    reconstructed_code = tokenize.untokenize(tl)
+
+    # Print the reconstructed code
+    print("\nReconstructed Code:")
+    print(reconstructed_code)
 
     
     
